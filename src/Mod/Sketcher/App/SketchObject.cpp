@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (c) Jürgen Riegel          (juergen.riegel@web.de) 2008     *
+ *   Copyright (c) Jï¿½rgen Riegel          (juergen.riegel@web.de) 2008     *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -54,6 +54,8 @@
 #include "SketchObjectPy.h"
 #include "Sketch.h"
 
+#include <App/FeaturePythonPyImp.h>
+
 using namespace Sketcher;
 using namespace Base;
 
@@ -90,6 +92,12 @@ SketchObject::~SketchObject()
 
 App::DocumentObjectExecReturn *SketchObject::execute(void)
 {
+	return recomputeShape();
+}
+
+App::DocumentObjectExecReturn *SketchObject::recomputeShape(void)
+{
+
     try {
         this->positionBySupport();
     }
@@ -139,6 +147,7 @@ App::DocumentObjectExecReturn *SketchObject::execute(void)
 
     return App::DocumentObject::StdReturn;
 }
+
 
 int SketchObject::hasConflicts(void) const
 {
@@ -1630,6 +1639,13 @@ namespace App {
 PROPERTY_SOURCE_TEMPLATE(Sketcher::SketchObjectPython, Sketcher::SketchObject)
 template<> const char* Sketcher::SketchObjectPython::getViewProviderName(void) const {
     return "SketcherGui::ViewProviderPython";
+}
+template<> PyObject* Sketcher::SketchObjectPython::getPyObject(void) {
+    if (PythonObject.is(Py::_None())) {
+        // ref counter is set to 1
+        PythonObject = Py::Object(new FeaturePythonPyT<Sketcher::SketchObjectPy>(this),true);
+    }
+    return Py::new_reference_to(PythonObject);
 }
 /// @endcond
 
